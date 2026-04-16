@@ -16,7 +16,7 @@ class Quote:
     
     @classmethod
     def __from_element__(cls, quote_element: WebElement):
-        text = quote_element.find_element(By.CLASS_NAME, "content").text
+        text = quote_element.find_element(By.CLASS_NAME, "text").text
         author = quote_element.find_element(By.CLASS_NAME, "author").text
         tags = [t.text for t in quote_element.find_elements(By.CLASS_NAME, "tag")]
         

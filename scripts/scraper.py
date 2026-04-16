@@ -1,7 +1,6 @@
-import pandas as pd
-import numpy as np
 import os
-import re
+import time
+import random
 from dotenv import load_dotenv
 from pathlib import Path
 from loguru import logger
@@ -42,8 +41,8 @@ def init_bot():
     options.add_argument("--no-first-run")
     options.add_argument("--disable-web-security")
     options.set_preference("general.useragent.override", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:115.0) Gecko/20100101 Firefox/115.0")
-    # options.set_preference("dom.webdriver.enabled", False)
-    # options.set_preference('useAutomationExtension', False)
+    options.set_preference("dom.webdriver.enabled", False)
+    options.set_preference('useAutomationExtension', False)
 
     logger.info('Initializing GeckoDriver...')
 
@@ -54,85 +53,52 @@ def init_bot():
     logger.info('GeckoDriver initialized successfully.')
 
     return driver, wait
-
-def get_authors(wait: WebDriverWait) -> list[str]:
-    authors = wait.until(EC.element_to_be_clickable((By.ID, "author"))).find_elements(By.TAG_NAME, "option")
-    authors = [a.get_attribute("value") for a in authors if a.get_attribute("value") != EMPTY_QUOTE_TAGS]
-    return authors
-
-def get_tags(driver: webdriver) -> list[Quote]:
-    tags = driver.find_element(By.ID, "tag").find_elements(By.TAG_NAME, "option")
-    return [t.get_attribute("value") for t in tags if t.get_attribute("value") != EMPTY_QUOTE_TAGS]
-
-def merge_quotes(quote_list: list[Quote]):
-    """Given a list of Quote objects, merge quotes with the same text and author by combining their tags into a single quote with all unique tags.
-
-    Args:
-        quote_list (list[Quote]): A list of Quote objects to be merged. May contain multiple Quote objects with the same text and author but different tags.
-
-    Returns:
-        list[Quote]: A list of Quote objects with unique text and author values.
-    """
     
-    merged = {}
-    for quote in quote_list:
-        key = (quote.text, quote.author)
-        if key not in merged:
-            merged[key] = set(quote.tags)
-        else:
-            merged[key].update(quote.tags)
-    
-    return [Quote.__from_dict__({
-        "text": text,
-        "author": author,
-        "tags": list(tags)
-    }) for (text, author), tags in merged.items()]
+def check_next_page(wait):
+    try:
+        next_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "li.next > a")))
+        return next_button.get_attribute("href")
+    except Exception as e:
+        logger.error(f'Error during next page check: {e}')
+        
+    return None
 
-def scrape_all_quotes() -> list[Quote]:
-    """Scrape all quotes for each author and their associated tags from the website.
-
-    Args:
-
-        authors (list): A list of author names to scrape quotes for.
+def scrape_all_quotes(retries=5, base_delay=1) -> list[Quote]:
+    """Scrapes all quotes from the website specified in the environment variable 'SCRAPE_URL' using Selenium WebDriver. The function navigates through all pages of quotes, extracts the quote text, author, and tags, and returns a list of Quote objects
 
     Returns:
         list[Quote]: A list of scraped Quote objects.
-    """    
-    quote_list = []
+    """
     
     driver, wait = init_bot()
-    driver.get(SCRAPE_URL)
-    authors = get_authors(wait)
-    logger.info(f"Found {len(authors)} authors")
     
-    for author in authors:
-        author_select = wait.until(EC.element_to_be_clickable((By.ID, "author")))
-        author_select.click()
-        option = author_select.find_element(By.XPATH, f""".//option[@value="{author}"]""")
-        option.click()
-        
-        tags = get_tags(driver)
-        
-        for tag in tags:
-            tag_select = wait.until(EC.element_to_be_clickable((By.ID, "tag")))
-            tag_select.click()
-            option = tag_select.find_element(By.XPATH, f".//option[@value='{tag}']")
-            option.click()
+    quote_list = []
+    
+    BASE_URL = __require_env("SCRAPE_URL")
+    current_url = BASE_URL
+    
+    while current_url is not None:            
+        try:
+            current_retries = 0
             
-            search = wait.until(EC.element_to_be_clickable((By.NAME, "submit_button")))
-            search.click()
+            driver.get(current_url)
+            quotes = wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, "quote")))
+            logger.info(f"Scraped {len(quotes)} quotes from {current_url}")
+            quote_list.extend([Quote.__from_element__(q) for q in quotes])
             
-            # Wait for page refresh, which will likely contain new quote data
-            wait.until(EC.staleness_of(search))
+            current_url = check_next_page(wait)
+        except TimeoutException as e:
+            logger.error(f"Timeout while loading page: {current_url} - {e}")
             
-            try:
-                quotes = wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, "quote")))
-                logger.info(f"[{author}] Scraped {len(quotes)} quotes for tag '{tag}'")
-                quote_list.extend([Quote.__from_element__(q) for q in quotes])
-            except TimeoutException:
-                logger.error(f"Timeout while waiting for quotes to load for author '{author}' and tag '{tag}'. Skipping this combination.")
-                pass
+            if current_retries < retries:
+                current_retries += 1
+                delay = (base_delay * 2 ** current_retries) + random.uniform(0, 1) # Exponential backoff with jitter
+                logger.error(f"Retrying in {delay} seconds...")
+                time.sleep(delay)
+            else:
+                logger.error("Max retries exceeded.")
+                break
 
-    # For cases where a quote contains multiple tags, combine them together into a single quote with all tags
-    merged_quotes = merge_quotes(quote_list=quote_list)
-    return merged_quotes
+    driver.quit()
+    
+    return quote_list
