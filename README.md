@@ -12,10 +12,7 @@ quote-scrape/
 ├── scripts/
 │   ├── scraper.py         # Core scraping logic
 │   ├── quote.py           # Quote data model
-│   └── aws.py             # (Reserved for future AWS integration)
-├── notebooks/
-│   └── bot.ipynb          # Jupyter notebook version
-└── configs/               # Configuration files (currently empty)
+│   └── aws.py             # AWS integration
 ```
 
 ## Prerequisites
@@ -28,7 +25,7 @@ quote-scrape/
 
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/ice-sorry/quote-scrape.git
    cd quote-scrape
    ```
 
