@@ -1,4 +1,5 @@
 import pandas as pd
+import sys
 from loguru import logger
 from pathlib import Path
 from scripts.scraper import scrape_all_quotes
@@ -27,6 +28,7 @@ def main():
         raise
     
     upload_quotes()
+    sys.exit(0)
 
 if __name__ == "__main__":
     main()
