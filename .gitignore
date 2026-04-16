@@ -1,0 +1,4 @@
+notebooks/
+output/
+*__pycache__/
+.env
