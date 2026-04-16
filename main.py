@@ -8,6 +8,7 @@ OUTPUT_PATH = Path(__file__).resolve().parent / 'output' / 'quotes.csv'
 
 def main():
     logger.info("Starting quote scraping process...")
+    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     
     try:
         quotes = scrape_all_quotes()
