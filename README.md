@@ -31,21 +31,26 @@ quote-scrape/
 
 2. Install dependencies:
    ```bash
+   python3 -m venv venv
+   source venv/bin/activate
    pip install -r requirements.txt
    ```
 
-   Required packages:
-   - pandas
-   - selenium
-   - webdriver-manager
-   - python-dotenv
-   - loguru
-
 ## Configuration
 
-- `SCRAPE_URL`: The base URL for scraping (default: https://quotes.toscrape.com/search.aspx)
-- `EMPTY_QUOTE_TAGS`: Placeholder value for empty tag selections (default: "----------")
-- `WEBDRIVER_WAIT_TIME`: Timeout for WebDriver waits in seconds (default: 10)
+Create a `.env` file in the root directory with the following environment variables:
+
+### Required Variables
+
+**Scraping Configuration:**
+- `SCRAPE_URL`: The base URL for scraping (default: `https://quotes.toscrape.com/`)
+- `WEBDRIVER_WAIT_TIME`: Timeout for WebDriver waits in seconds (e.g., `10`)
+
+**AWS S3 Configuration (for uploading results):**
+- `ACCESS_KEY`: AWS access key ID for S3 authentication. **Required only in local environment.**
+- `ACCESS_SECRET`: AWS secret access key for S3 authentication. **Required only in local environment.**
+- `BUCKET_NAME`: Name of the S3 bucket where quotes will be uploaded
+- `BUCKET_FILE`: Object key/path for the uploaded file in S3 (e.g., `quotes.csv`)
 
 ## Usage
 
@@ -60,4 +65,4 @@ python main.py
 The scraper generates `quotes.csv` with the following columns:
 - `text`: The quote content
 - `author`: The author of the quote
-- `tags`: Comma-separated list of tags associated with the quote
+- `tags`: Pythonic list of tags that describe the quote
