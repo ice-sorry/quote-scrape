@@ -8,6 +8,6 @@ CRON_LINE="$CRON_SCHEDULE $PYTHON_PATH $SCRIPT_PATH >> ${SCRIPT_PATH}.log 2>&1"
 
 (crontab -l 2>/dev/null | grep -Fv "$SCRIPT_PATH"; echo "$CRON_LINE") | crontab -
 
-echo "✅ Crontab created for $SCRIPT_PATH"
+echo "Crontab created for $SCRIPT_PATH"
 echo "Current crontab:"
 crontab -l

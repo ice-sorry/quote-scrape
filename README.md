@@ -1,6 +1,6 @@
 # Quote Scraper
 
-A Python-based web scraper that extracts quotes from [Quotes to Scrape](https://quotes.toscrape.com/) website using Selenium WebDriver. The scraper collects quotes by iterating through all authors and their associated tags, then saves the data to a CSV file.
+A Python-based web scraper that extracts quotes from [Quotes to Scrape](https://quotes.toscrape.com/) website using Selenium WebDriver, then saves the data to a CSV file.
 
 ## Project Structure
 
@@ -51,6 +51,12 @@ Create a `.env` file in the root directory with the following environment variab
 - `ACCESS_SECRET`: AWS secret access key for S3 authentication. **Required only in local environment.**
 - `BUCKET_NAME`: Name of the S3 bucket where quotes will be uploaded
 - `BUCKET_FILE`: Object key/path for the uploaded file in S3 (e.g., `quotes.csv`)
+
+## Cron
+
+The repo contains the `enable_cron.sh` and `disable_cron.sh` files to serve as a way to toggle the automated running of the script. This is for demonstration purposes only.
+
+The default runtime for the cron is **every Monday at 8:00 UTC**.
 
 ## Usage
 
