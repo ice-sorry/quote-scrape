@@ -102,8 +102,7 @@ def scrape_all_quotes() -> list[Quote]:
     
     driver, wait = init_bot()
     driver.get(SCRAPE_URL)
-    # authors = get_authors(wait)
-    authors = ['Albert Einstein']
+    authors = get_authors(wait)
     
     for author in authors:
         author_select = wait.until(EC.element_to_be_clickable((By.ID, "author")))
